@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>만 나이 계산 & 독감 예방접종 안내</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* 공통 컨테이너 */
+    #container {
+        width: 100%;
+        max-width: 500px;
+        box-sizing: border-box;
+    }
+
+    /* 텍스트박스 */
+    #birth {
+        width: 100%;
+        font-size: 24px;
+        padding: 10px;
+        box-sizing: border-box;
+        margin-bottom: 20px;
+    }
+
+    /* 키패드 */
+    #keypad {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        box-sizing: border-box;
+        margin-bottom: 20px;
+    }
+
+    .key {
+        font-size: 32px;
+        padding: 20px;
+        background: #eee;
+        text-align: center;
+        border-radius: 10px;
+        cursor: pointer;
+        user-select: none;
+        box-sizing: border-box;
+    }
+
+    .key:active {
+        background: #ccc;
+    }
+
+    /* 만 나이 표시 박스 */
+    #result {
+        width: 100%;
+        height: 60px;               /* 고정 높이 */
+        padding: 10px;
+        box-sizing: border-box;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;         /* 가운데 정렬 */
+        display: flex;
+        align-items: center;        /* 세로 가운데 정렬 */
+        justify-content: center;    /* 가로 가운데 정렬 */
+        margin-bottom: 20px;
+
+        border: 2px solid #aaa;
+        border-radius: 10px;
+        background-color: #fafafa;
+    }
+
+    /* 메시지 박스 */
+    #vaccineNotice {
+        width: 100%;
+        height: 130px;              /* 고정 높이 */
+        padding: 20px;
+        box-sizing: border-box;
+        border: 3px solid #333;
+        border-radius: 15px;
+        background-color: #f9f9f9;
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        line-height: 1.4;
+        overflow: hidden;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		
+    }
+</style>
+</head>
+<body>
+
+<div id="container">
+
+    <h2>만 나이 계산 & 독감 예방접종 안내</h2>
+
+    <input type="text" id="birth" placeholder="0000-00-00" maxlength="10">
+
+    <div id="keypad">
+        <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+        <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+        <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+        <div class="key">0</div><div class="key">←</div><div class="key">확인</div>
+    </div>
+
+    <div id="result"></div>
+    <div id="vaccineNotice"></div>
+
+</div>
+
+<script>
+    // 설정 통합
+    const vaccineConfig = [
+        { from: "0000-01-01", to: "1951-12-31", startDate: "2026-10-06" },
+        { from: "1952-01-01", to: "1956-12-31", startDate: "2026-10-12" },
+        { from: "1957-01-01", to: "1961-12-31", startDate: "2026-10-15" }
+    ];
+
+    const birthInput = document.getElementById("birth");
+    const resultDiv = document.getElementById("result");
+    const vaccineNotice = document.getElementById("vaccineNotice");
+
+    let oldValue = "";
+
+    // 자동 하이픈 삽입 + 백스페이스 정상 작동
+    birthInput.addEventListener("input", function() {
+        let v = birthInput.value.replace(/[^0-9-]/g, "");
+
+        if (v.length < oldValue.length) {
+            oldValue = v;
+            birthInput.value = v;
+            return;
+        }
+
+        if (v.length === 4 && !v.includes("-")) v = v + "-";
+        if (v.length === 7 && v.split("-").length === 2) v = v + "-";
+
+        oldValue = v;
+        birthInput.value = v;
+    });
+
+    // 엔터 입력 시 자동 계산
+    birthInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            calculateAge();
+        }
+    });
+
+    // 키패드 입력
+    document.querySelectorAll(".key").forEach(key => {
+        key.addEventListener("click", () => {
+            let val = key.textContent;
+
+            if (val === "←") {
+                birthInput.value = birthInput.value.slice(0, -1);
+                oldValue = birthInput.value;
+                return;
+            }
+            if (val === "확인") {
+                calculateAge();
+                return;
+            }
+
+            let current = birthInput.value;
+
+            if (current.length < 10 && /[0-9]/.test(val)) {
+                current += val;
+
+                if (current.length === 4) current += "-";
+                if (current.length === 7) current += "-";
+            }
+
+            oldValue = current;
+            birthInput.value = current;
+        });
+    });
+
+    function calculateAge() {
+        const birth = birthInput.value.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) {
+            resultDiv.textContent = "올바른 생년월일을 입력해주세요.";
+            vaccineNotice.innerHTML = "";
+            return;
+        }
+
+        const today = new Date();
+        const birthDate = new Date(birth);
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        resultDiv.textContent = `만 나이: ${age}세`;
+
+        showVaccineStartDate(birth);
+    }
+
+    function getKoreanWeekday(dateStr) {
+        const days = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+        const d = new Date(dateStr);
+        return days[d.getDay()];
+    }
+
+    function showVaccineStartDate(birth) {
+        for (let item of vaccineConfig) {
+            if (birth >= item.from && birth <= item.to) {
+                const weekday = getKoreanWeekday(item.startDate);
+                vaccineNotice.innerHTML =
+                    `${item.startDate} (${weekday})부터<br>접종 가능합니다`;
+                return;
+            }
+        }
+
+        vaccineNotice.innerHTML = "해당하는 접종 안내가 없습니다.";
+    }
+</script>
+
+</body>
+</html>
