@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>독감 예방접종 일정 안내</title>
 <style>
     body {
@@ -15,7 +16,13 @@
     #container {
         width: 100%;
         max-width: 500px;
-        box-sizing: border-box;
+		margin: auto;
+	}
+
+	@media (max-width: 600px) {
+		#container {
+			max-width: 100%;
+		}
     }
 
     /* 텍스트박스 */
